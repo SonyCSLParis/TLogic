@@ -1,3 +1,5 @@
+`~/Library/"Application Support"/pypoetry/venv/bin/poetry` on MacOS.
+
 # TLogic: Temporal Logical Rules for Explainable Link Forecasting on Temporal Knowledge Graphs
 
 This repository contains the code for the paper [TLogic: Temporal Logical Rules for Explainable Link Forecasting on Temporal Knowledge Graphs](https://arxiv.org/abs/2112.08025).

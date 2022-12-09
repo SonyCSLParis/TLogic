@@ -111,11 +111,15 @@ class Rule_Learner(object):
 
         all_bodies.sort()
         unique_bodies = list(x for x, _ in itertools.groupby(all_bodies))
+        if unique_bodies:
+            rule["instantiated_body"] = [[int(x) for x in l] for l in unique_bodies]
+        else:
+            rule["instantiated_body"] = unique_bodies
         body_support = len(unique_bodies)
 
         confidence, rule_support = 0, 0
         if body_support:
-            rule_support = self.calculate_rule_support(unique_bodies, rule["head_rel"])
+            rule_support, rule["instantiated_head"] = self.calculate_rule_support(unique_bodies, rule["head_rel"])
             confidence = round(rule_support / body_support, 6)
 
         return confidence, rule_support, body_support
@@ -144,7 +148,7 @@ class Rule_Learner(object):
         cur_node = next_edge[2]
         body_ents_tss.append(next_edge[0])
         body_ents_tss.append(cur_ts)
-        body_ents_tss.append(cur_node)
+        body_ents_tss.append(cur_node) 
 
         for cur_rel in body_rels[1:]:
             next_edges = self.edges[cur_rel]
@@ -183,6 +187,7 @@ class Rule_Learner(object):
         """
 
         rule_support = 0
+        masks = []
         head_rel_edges = self.edges[head_rel]
         for body in unique_bodies:
             mask = (
@@ -193,8 +198,9 @@ class Rule_Learner(object):
 
             if True in mask:
                 rule_support += 1
+                masks.append([int(body[0]), head_rel, int(body[-1]), int(body[-2])])
 
-        return rule_support
+        return rule_support, masks
 
     def update_rules_dict(self, rule):
         """
@@ -245,6 +251,14 @@ class Rule_Learner(object):
 
         rules_dict = {int(k): v for k, v in self.rules_dict.items()}
         filename = "{0}_r{1}_n{2}_{3}_s{4}_rules.json".format(
+            dt, rule_lengths, num_walks, transition_distr, seed
+        )
+        filename = filename.replace(" ", "")
+        with open(self.output_dir + filename, "w", encoding="utf-8") as fout:
+            json.dump(rules_dict, fout)
+
+        rules_dict = {int(k): [x for x in v if x["conf"] > 0.7] for k, v in self.rules_dict.items()}
+        filename = "{0}_r{1}_n{2}_{3}_s{4}_rules_filtered.json".format(
             dt, rule_lengths, num_walks, transition_distr, seed
         )
         filename = filename.replace(" ", "")
